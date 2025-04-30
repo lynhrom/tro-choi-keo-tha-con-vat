@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vườn Hoa Kỳ Diệu</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(to bottom, #a1ffce, #faffd1);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .header {
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .title {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 5px;
+        }
+        
+        .target-letter {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #4ecdc4;
+            background-color: white;
+            padding: 10px 30px;
+            border-radius: 50px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 10px 0;
+        }
+        
+        .bee {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            transition: all 0.5s ease;
+            z-index: 10;
+        }
+        
+        .garden {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            position: relative;
+            flex-grow: 1;
+        }
+        
+        .flower {
+            width: 100px;
+            height: 120px;
+            margin: 15px;
+            cursor: grab;
+            user-select: none;
+            position: relative;
+            transition: transform 0.3s;
+        }
+        
+        .flower:hover {
+            transform: scale(1.1);
+        }
+        
+        .flower.dragging {
+            opacity: 0.8;
+            transform: scale(1.2);
+            cursor: grabbing;
+        }
+        
+        .flower.correct {
+            animation: correctAnimation 1s ease-out;
+        }
+        
+        .flower.wrong {
+            animation: wrongAnimation 0.5s ease-in-out;
+        }
+        
+        .flower-petal {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        
+        .flower-center {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #ffd700;
+            border-radius: 50%;
+            top: 45px;
+            left: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            z-index: 2;
+        }
+        
+       /* Sửa lại CSS cho rổ */
+        .basket {
+            width: 150px;
+            height: 100px;
+            background-color: #d2b48c;
+            border: 3px solid #8b4513;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #5e3a1e;
+        }
+        /* Thiết kế mới cho giỏ hoa */
+        .basket-container {
+            position: relative;
+            width: 200px;
+            height: 150px;
+            margin: 20px auto;
+        }
+        
+        .basket {
+            width: 180px;
+            height: 120px;
+            background: #f4a460;
+            border-radius: 0 0 30px 30px;
+            position: relative;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 5px solid #8b4513;
+        }
+        
+        .basket:before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 20px;
+            background: #d2b48c;
+            top: -15px;
+            border-radius: 50%;
+            box-shadow: inset 0 -5px 5px rgba(0,0,0,0.2);
+        }
+        
+        .basket:after {
+            content: "";
+            position: absolute;
+            width: 60px;
+            height: 30px;
+            background: #8b4513;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 5px 5px rgba(0,0,0,0.1);
+        }
+        
+        .basket-handle {
+            position: absolute;
+            width: 100px;
+            height: 40px;
+            border: 8px solid #8b4513;
+            border-color: transparent transparent #8b4513 transparent;
+            border-radius: 50%;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .basket-label {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #5e3a1e;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        .basket-flower {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #ff69b4;
+            border-radius: 50%;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.7;
+            z-index: 1;
+        }
+        
+        .basket-flower:before {
+            content: "🌸";
+            position: absolute;
+            font-size: 20px;
+            top: -10px;
+            left: 5px;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Hiệu ứng khi có hoa được thả vào */
+        .basket.collected {
+            animation: bounce 0.5s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .message {
+            font-size: 1.5rem;
+            color: #ff6b6b;
+            height: 40px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .score {
+            font-size: 1.2rem;
+            color: #4a90e2;
+            margin: 10px 0;
+        }
+        
+        @keyframes correctAnimation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        @keyframes wrongAnimation {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .petal {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ff9ff3;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        @keyframes float {
+            to {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+		/* Thiết kế mới cho giỏ hoa */
+        .basket-container {
+            position: relative;
+            width: 200px;
+            height: 150px;
+            margin: 20px auto;
+        }
+        
+        .basket {
+            width: 180px;
+            height: 120px;
+            background: #f4a460;
+            border-radius: 0 0 30px 30px;
+            position: relative;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 5px solid #8b4513;
+        }
+        
+        .basket:before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 20px;
+            background: #d2b48c;
+            top: -15px;
+            border-radius: 50%;
+            box-shadow: inset 0 -5px 5px rgba(0,0,0,0.2);
+        }
+        
+        .basket:after {
+            content: "";
+            position: absolute;
+            width: 60px;
+            height: 30px;
+            background: #8b4513;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 5px 5px rgba(0,0,0,0.1);
+        }
+        
+        .basket-handle {
+            position: absolute;
+            width: 100px;
+            height: 40px;
+            border: 8px solid #8b4513;
+            border-color: transparent transparent #8b4513 transparent;
+            border-radius: 50%;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .basket-label {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #5e3a1e;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        .basket-flower {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #ff69b4;
+            border-radius: 50%;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.7;
+            z-index: 1;
+        }
+        
+        .basket-flower:before {
+            content: "🌸";
+            position: absolute;
+            font-size: 20px;
+            top: -10px;
+            left: 5px;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Hiệu ứng khi có hoa được thả vào */
+        .basket.collected {
+            animation: bounce 0.5s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">Vườn Hoa Kỳ Diệu</h1>
+        <div class="target-letter" id="targetLetter">Hãy tìm chữ A</div>
+        <div class="message" id="message"></div>
+        <div class="score" id="score">Điểm: 0</div>
+    </div>
+    
+    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23FFD700'/><circle cx='35' cy='40' r='5' fill='%23333'/><circle cx='65' cy='40' r='5' fill='%23333'/><path d='M30,65 Q50,80 70,65' stroke='%23333' stroke-width='3' fill='none'/><path d='M50,20 L50,40 M20,50 L40,50 M60,50 L80,50' stroke='%23333' stroke-width='3'/><path d='M20,20 L30,30 M80,20 L70,30' stroke='%23333' stroke-width='3'/><path d='M50,70 Q60,75 50,80 Q40,75 50,70' fill='%23333'/></svg>" 
+         alt="Chú ong" class="bee" id="bee">
+    
+    <div class="garden" id="garden">
+        <!-- Các bông hoa sẽ được tạo bằng JavaScript -->
+    </div>
+    
+       <div class="basket-container">
+        <div class="basket-handle"></div>
+        <div class="basket" id="basket">
+            <div class="basket-flower"></div>
+            <div class="basket-label">Kéo hoa vào đây!</div>
+        </div>
+    </div>
+    
+    
+    
+    <audio id="correctSound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3"></audio>
+    <audio id="wrongSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3"></audio>
+    <audio id="beeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-bee-flitting-1874.mp3"></audio>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Trò chơi đang khởi động..."); // Kiểm tra console
+            
+            // Các biến toàn cục
+            const garden = document.getElementById('garden');
+            const basket = document.getElementById('basket');
+            const targetLetterElement = document.getElementById('targetLetter');
+            const messageElement = document.getElementById('message');
+            const scoreElement = document.getElementById('score');
+            const correctSound = document.getElementById('correctSound');
+            const wrongSound = document.getElementById('wrongSound');
+            const beeSound = document.getElementById('beeSound');
+            const bee = document.getElementById('bee');
+            
+            let score = 0;
+            let currentTargetLetter = '';
+            let flowers = [];
+            const colors = ['#ff9ff3', '#feca57', '#ff6b6b', '#48dbfb', '#1dd1a1', '#f368e0', '#ff9f43'];
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            
+            // Khởi tạo trò chơi
+            initGame();
+            
+            function initGame() {
+                console.log("Đang khởi tạo vườn hoa...");
+                
+                // Tạo 6-8 bông hoa ngẫu nhiên
+                const flowerCount = Math.floor(Math.random() * 3) + 6; // 6-8 hoa
+                garden.innerHTML = '';
+                flowers = [];
+                
+                // Chọn chữ cái mục tiêu ngẫu nhiên
+                currentTargetLetter = letters[Math.floor(Math.random() * letters.length)];
+                targetLetterElement.textContent = `Hãy tìm chữ ${currentTargetLetter}`;
+                
+                console.log(`Mục tiêu: ${currentTargetLetter}, Số hoa: ${flowerCount}`);
+                
+                // Tạo các bông hoa
+                for (let i = 0; i < flowerCount; i++) {
+                    const flower = createFlower();
+                    garden.appendChild(flower);
+                    flowers.push(flower);
+                    console.log(`Tạo hoa ${i+1} với chữ ${flower.dataset.letter}`);
+                }
+                
+                // Đảm bảo có ít nhất 1 hoa có chữ cái mục tiêu
+                if (!flowers.some(f => f.dataset.letter === currentTargetLetter)) {
+                    const randomIndex = Math.floor(Math.random() * flowers.length);
+                    flowers[randomIndex].querySelector('.flower-center').textContent = currentTargetLetter;
+                    flowers[randomIndex].dataset.letter = currentTargetLetter;
+                    console.log(`Đã thêm chữ ${currentTargetLetter} vào hoa ${randomIndex}`);
+                }
+                
+                // Hiển thị hướng dẫn từ chú ong
+                showBeeMessage(`Hãy tìm bông hoa có chữ ${currentTargetLetter} và bỏ vào rổ nhé!`);
+            }
+            
+            function createFlower() {
+                const flower = document.createElement('div');
+                flower.className = 'flower';
+                flower.draggable = true;
+                
+                // Chọn chữ cái ngẫu nhiên (có thể trùng với mục tiêu)
+                const letter = letters[Math.floor(Math.random() * letters.length)];
+                flower.dataset.letter = letter;
+                
+                // Màu sắc ngẫu nhiên
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Tạo cánh hoa
+                for (let i = 0; i < 6; i++) {
+                    const petal = document.createElement('div');
+                    petal.className = 'flower-petal';
+                    petal.style.backgroundColor = color;
+                    petal.style.transform = `rotate(${i * 60}deg) translateY(-30px)`;
+                    flower.appendChild(petal);
+                }
+                
+                // Tạo nhụy hoa với chữ cái
+                const center = document.createElement('div');
+                center.className = 'flower-center';
+                center.textContent = letter;
+                flower.appendChild(center);
+                
+                // Thêm sự kiện kéo thả
+                flower.addEventListener('dragstart', dragStart);
+                flower.addEventListener('dragend', dragEnd);
+                
+                return flower;
+            }
+            
+            function dragStart(e) {
+                this.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', this.dataset.letter);
+                e.dataTransfer.effectAllowed = 'move';
+            }
+            
+            function dragEnd() {
+                this.classList.remove('dragging');
+            }
+            
+            // Sự kiện thả vào rổ
+            basket.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+            
+            basket.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const droppedLetter = e.dataTransfer.getData('text/plain');
+                const draggedFlower = document.querySelector('.flower.dragging');
+                
+                if (!draggedFlower) {
+                    console.log("Không tìm thấy hoa đang kéo");
+                    return;
+                }
+                
+                console.log(`Đã thả hoa với chữ ${droppedLetter}, mục tiêu là ${currentTargetLetter}`);
+                
+                if (droppedLetter === currentTargetLetter) {
+                    // Đúng
+                    score++;
+                    scoreElement.textContent = `Điểm: ${score}`;
+                    messageElement.textContent = `Giỏi quá! Bé đã chọn đúng rồi!`;
+                    correctSound.play().catch(e => console.log("Lỗi phát âm thanh:", e));
+                    
+                    // Hiệu ứng hoa bay lên
+                    draggedFlower.classList.add('correct');
+                    createFallingPetals(draggedFlower);
+                    
+                    // Chú ong bay đến khen
+                    animateBee(draggedFlower, 'Giỏi lắm!');
+                    
+                    // Sau 1 giây tạo level mới
+                    setTimeout(() => {
+                        initGame();
+                    }, 1000);
+                } else {
+                    // Sai
+                    messageElement.textContent = `Ôi không, thử lại nhé!`;
+                    wrongSound.play().catch(e => console.log("Lỗi phát âm thanh:", e));
+                    draggedFlower.classList.add('wrong');
+                    
+                    // Chú ong bay đến động viên
+                    animateBee(draggedFlower, 'Cố lên bé!');
+                    
+                    // Xóa class wrong sau animation
+                    setTimeout(() => {
+                        draggedFlower.classList.remove('wrong');
+                    }, 500);
+                }
+            });
+            
+            function createFallingPetals(flower) {
+                const rect = flower.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                for (let i = 0; i < 20; i++) {
+                    const petal = document.createElement('div');
+                    petal.className = 'petal';
+                    petal.style.left = `${centerX}px`;
+                    petal.style.top = `${centerY}px`;
+                    petal.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    document.body.appendChild(petal);
+                    
+                    // Kích hoạt animation sau khi thêm vào DOM
+                    setTimeout(() => {
+                        petal.style.opacity = '1';
+                        petal.style.transform = `translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px)`;
+                        petal.style.animation = `float ${Math.random() * 1 + 1}s forwards`;
+                    }, 10);
+                    
+                    // Xóa petal sau animation
+                    setTimeout(() => {
+                        petal.remove();
+                    }, 2000);
+                }
+            }
+            
+            function animateBee(targetElement, message) {
+                beeSound.play().catch(e => console.log("Lỗi phát âm thanh ong:", e));
+                const targetRect = targetElement.getBoundingClientRect();
+                const targetX = targetRect.left + targetRect.width / 2;
+                const targetY = targetRect.top + targetRect.height / 2;
+                
+                // Bay đến bông hoa
+                bee.style.transition = 'all 0.8s ease-in-out';
+                bee.style.left = `${targetX - 40}px`;
+                bee.style.top = `${targetY - 40}px`;
+                
+                // Hiển thị tin nhắn
+                setTimeout(() => {
+                    showBeeMessage(message);
+                    
+                    // Bay về vị trí ban đầu
+                    setTimeout(() => {
+                        bee.style.transition = 'all 1s ease-in-out';
+                        bee.style.left = '20px';
+                        bee.style.top = '20px';
+                    }, 1500);
+                }, 800);
+            }
+            
+            function showBeeMessage(msg) {
+                messageElement.textContent = msg;
+                
+                // Ẩn tin nhắn sau 3 giây
+                setTimeout(() => {
+                    if (messageElement.textContent === msg) {
+                        messageElement.textContent = '';
+                    }
+                }, 3000);
+            }
+        });
+		// Thêm hiệu ứng khi thả hoa vào giỏ
+        basket.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const droppedLetter = e.dataTransfer.getData('text/plain');
+            const draggedFlower = document.querySelector('.flower.dragging');
+            
+            if (!draggedFlower) return;
+            
+            if (droppedLetter === currentTargetLetter) {
+                // Thêm hiệu ứng giỏ
+                basket.classList.add('collected');
+                setTimeout(() => {
+                    basket.classList.remove('collected');
+                }, 500);
+                
+                // ... (Phần còn lại giữ nguyên) ...
+            }
+        });
+    </script>
+</body>
+</html>
