@@ -26,6 +26,39 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
+        .player-info {
+            margin-bottom: 15px;
+        }
+        
+        .player-name {
+            font-size: 20px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .name-input {
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        
+        .name-submit {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .name-submit:hover {
+            background-color: #45a049;
+        }
+        
         .instructions {
             background-color: #fffacd;
             padding: 10px;
@@ -166,11 +199,54 @@
             50% { transform: scale(1.5); opacity: 1; }
             100% { transform: scale(1); opacity: 0; }
         }
+        
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        
+        .welcome-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .welcome-title {
+            color: #ff6b6b;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <div class="game-container">
+    <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-box">
+            <h2 class="welcome-title">TRÒ CHƠI KÉO THẢ CON VẬT</h2>
+            <p>Nhập tên của bé để bắt đầu chơi nhé!</p>
+            <input type="text" class="name-input" id="player-name-input" placeholder="Tên của bé" maxlength="20">
+            <button class="name-submit" id="start-game-btn">Bắt đầu</button>
+        </div>
+    </div>
+
+    <div class="game-container" id="game-container" style="display: none;">
         <h1>TRÒ CHƠI KÉO THẢ CON VẬT</h1>
+        
+        <div class="player-info">
+            <span>Bé: </span>
+            <span class="player-name" id="player-name-display"></span>
+        </div>
         
         <div class="level-indicator">Cấp độ: <span id="level">1</span>/3</div>
         
@@ -244,8 +320,14 @@
         let droppedAnimals = [];
         let canDrop = true;
         let currentLevelData = null;
+        let playerName = "";
         
         // Các phần tử DOM
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const gameContainer = document.getElementById('game-container');
+        const playerNameInput = document.getElementById('player-name-input');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const playerNameDisplay = document.getElementById('player-name-display');
         const animalsContainer = document.getElementById('animals-container');
         const dropArea = document.getElementById('drop-area');
         const targetSequence = document.getElementById('target-sequence');
@@ -255,6 +337,27 @@
         const hintBtn = document.getElementById('hint-btn');
         const resetBtn = document.getElementById('reset-btn');
         const nextBtn = document.getElementById('next-btn');
+        
+        // Bắt đầu trò chơi khi nhập tên
+        startGameBtn.addEventListener('click', function() {
+            playerName = playerNameInput.value.trim();
+            if (playerName === "") {
+                alert("Bé nhập tên vào nhé!");
+                return;
+            }
+            
+            playerNameDisplay.textContent = playerName;
+            welcomeScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            initGame();
+        });
+        
+        // Cho phép nhấn Enter để bắt đầu
+        playerNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                startGameBtn.click();
+            }
+        });
         
         // Hiệu ứng ăn mừng
         function showCelebration() {
@@ -357,7 +460,7 @@
                 // Kiểm tra xem đã hoàn thành chưa
                 if (droppedAnimals.length === currentLevelData.sequence.length) {
                     canDrop = false;
-                    feedback.textContent = 'Chính xác! Bé giỏi quá!';
+                    feedback.textContent = `${playerName} giỏi quá! Chính xác!`;
                     feedback.className = 'feedback correct';
                     nextBtn.disabled = false;
                     showCelebration();
@@ -400,15 +503,12 @@
                 currentLevel++;
                 initGame();
             } else {
-                feedback.textContent = 'Chúc mừng bé đã hoàn thành tất cả các cấp độ!';
+                feedback.textContent = `Chúc mừng ${playerName} đã hoàn thành tất cả các cấp độ!`;
                 feedback.className = 'feedback correct';
                 nextBtn.disabled = true;
                 showCelebration();
             }
         });
-        
-        // Bắt đầu trò chơi
-        initGame();
     </script>
 </body>
 </html>
