@@ -228,6 +228,36 @@
             font-size: 28px;
             margin-bottom: 20px;
         }
+        
+        .audio-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .audio-button {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .audio-button:hover {
+            background-color: #f57c00;
+        }
+        
+        .audio-icon {
+            margin-right: 5px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -246,6 +276,17 @@
         <div class="player-info">
             <span>Bé: </span>
             <span class="player-name" id="player-name-display"></span>
+        </div>
+        
+        <div class="audio-controls">
+            <button class="audio-button" id="toggle-music">
+                <span class="audio-icon">🎵</span>
+                <span id="music-text">Tắt nhạc</span>
+            </button>
+            <button class="audio-button" id="toggle-sound">
+                <span class="audio-icon">🔊</span>
+                <span id="sound-text">Tắt âm thanh</span>
+            </button>
         </div>
         
         <div class="level-indicator">Cấp độ: <span id="level">1</span>/3</div>
@@ -271,6 +312,27 @@
             <button id="next-btn" disabled>Tiếp theo</button>
         </div>
     </div>
+
+    <!-- Audio elements -->
+    <audio id="background-music" loop>
+        <source src="https://cdn.freesound.org/previews/619/619282_13084319-lq.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="correct-sound">
+        <source src="https://cdn.freesound.org/previews/619/619087_12789040-lq.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="wrong-sound">
+        <source src="https://cdn.freesound.org/previews/331/331912_3248244-lq.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="level-complete-sound">
+        <source src="https://cdn.freesound.org/previews/258/258142_4486188-lq.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="hint-sound">
+        <source src="https://cdn.freesound.org/previews/414/414290_8057916-lq.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         // Danh sách tất cả các con vật có thể có
@@ -321,6 +383,8 @@
         let canDrop = true;
         let currentLevelData = null;
         let playerName = "";
+        let isMusicOn = true;
+        let isSoundOn = true;
         
         // Các phần tử DOM
         const welcomeScreen = document.getElementById('welcome-screen');
@@ -338,6 +402,49 @@
         const resetBtn = document.getElementById('reset-btn');
         const nextBtn = document.getElementById('next-btn');
         
+        // Các phần tử audio
+        const backgroundMusic = document.getElementById('background-music');
+        const correctSound = document.getElementById('correct-sound');
+        const wrongSound = document.getElementById('wrong-sound');
+        const levelCompleteSound = document.getElementById('level-complete-sound');
+        const hintSound = document.getElementById('hint-sound');
+        
+        // Điều khiển nhạc và âm thanh
+        const toggleMusicBtn = document.getElementById('toggle-music');
+        const toggleSoundBtn = document.getElementById('toggle-sound');
+        const musicText = document.getElementById('music-text');
+        const soundText = document.getElementById('sound-text');
+        
+        // Điều khiển nhạc nền
+        toggleMusicBtn.addEventListener('click', function() {
+            isMusicOn = !isMusicOn;
+            if (isMusicOn) {
+                backgroundMusic.play();
+                musicText.textContent = 'Tắt nhạc';
+            } else {
+                backgroundMusic.pause();
+                musicText.textContent = 'Bật nhạc';
+            }
+        });
+        
+        // Điều khiển âm thanh
+        toggleSoundBtn.addEventListener('click', function() {
+            isSoundOn = !isSoundOn;
+            if (isSoundOn) {
+                soundText.textContent = 'Tắt âm thanh';
+            } else {
+                soundText.textContent = 'Bật âm thanh';
+            }
+        });
+        
+        // Hàm chơi âm thanh
+        function playSound(sound) {
+            if (isSoundOn) {
+                sound.currentTime = 0;
+                sound.play();
+            }
+        }
+        
         // Bắt đầu trò chơi khi nhập tên
         startGameBtn.addEventListener('click', function() {
             playerName = playerNameInput.value.trim();
@@ -349,6 +456,12 @@
             playerNameDisplay.textContent = playerName;
             welcomeScreen.style.display = 'none';
             gameContainer.style.display = 'block';
+            
+            // Bắt đầu nhạc nền
+            if (isMusicOn) {
+                backgroundMusic.play();
+            }
+            
             initGame();
         });
         
@@ -447,6 +560,9 @@
             if (animal === expectedAnimal) {
                 droppedAnimals.push(animal);
                 
+                // Phát âm thanh đúng
+                playSound(correctSound);
+                
                 // Hiển thị con vật đã thả
                 const animalElement = document.createElement('span');
                 animalElement.className = 'animal';
@@ -464,6 +580,9 @@
                     feedback.className = 'feedback correct';
                     nextBtn.disabled = false;
                     showCelebration();
+                    
+                    // Phát âm thanh hoàn thành cấp độ
+                    playSound(levelCompleteSound);
                 } else {
                     feedback.textContent = 'Đúng rồi! Tiếp theo là gì nhỉ?';
                     feedback.className = 'feedback correct';
@@ -472,6 +591,9 @@
                     }, 1000);
                 }
             } else {
+                // Phát âm thanh sai
+                playSound(wrongSound);
+                
                 feedback.textContent = 'Chưa đúng rồi, bé thử lại nhé!';
                 feedback.className = 'feedback wrong';
                 setTimeout(() => {
@@ -483,6 +605,9 @@
         // Nút gợi ý
         hintBtn.addEventListener('click', function() {
             if (droppedAnimals.length < currentLevelData.sequence.length) {
+                // Phát âm thanh gợi ý
+                playSound(hintSound);
+                
                 const nextAnimal = currentLevelData.sequence[droppedAnimals.length];
                 feedback.textContent = `Con vật tiếp theo là: ${nextAnimal}`;
                 feedback.className = 'feedback correct';
@@ -494,6 +619,7 @@
         
         // Nút làm lại
         resetBtn.addEventListener('click', function() {
+            playSound(hintSound);
             initGame();
         });
         
@@ -501,13 +627,29 @@
         nextBtn.addEventListener('click', function() {
             if (currentLevel < levels.length - 1) {
                 currentLevel++;
+                playSound(correctSound);
                 initGame();
             } else {
                 feedback.textContent = `Chúc mừng ${playerName} đã hoàn thành tất cả các cấp độ!`;
                 feedback.className = 'feedback correct';
                 nextBtn.disabled = true;
                 showCelebration();
+                playSound(levelCompleteSound);
             }
+        });
+        
+        // Xử lý lỗi tải âm thanh
+        backgroundMusic.addEventListener('error', function() {
+            console.log('Không thể tải nhạc nền');
+            toggleMusicBtn.disabled = true;
+            musicText.textContent = 'Không có nhạc';
+        });
+        
+        // Tự động tải lại âm thanh khi đã tải xong metadata
+        document.querySelectorAll('audio').forEach(audio => {
+            audio.addEventListener('loadedmetadata', function() {
+                console.log(`Đã tải xong: ${this.id}`);
+            });
         });
     </script>
 </body>
