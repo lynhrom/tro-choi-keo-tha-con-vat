@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò chơi Kéo Thả Con Vật</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #ff6b6b;
+            font-size: 28px;
+        }
+        
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .instructions {
+            background-color: #fffacd;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        .animals-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .animal {
+            font-size: 50px;
+            margin: 10px;
+            cursor: grab;
+            transition: transform 0.2s;
+        }
+        
+        .animal:active {
+            cursor: grabbing;
+            transform: scale(1.2);
+        }
+        
+        .drop-area {
+            min-height: 100px;
+            border: 3px dashed #aaa;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            background-color: #f9f9f9;
+            flex-direction: column;
+        }
+        
+        .drop-area.highlight {
+            border-color: #4CAF50;
+            background-color: #e8f5e9;
+        }
+        
+        .target-sequence {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .target-animal {
+            font-size: 30px;
+            margin: 5px;
+            opacity: 0.5;
+        }
+        
+        .target-animal.completed {
+            opacity: 1;
+        }
+        
+        .user-sequence {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            min-height: 60px;
+            width: 100%;
+        }
+        
+        .buttons {
+            margin-top: 20px;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .feedback {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 15px 0;
+            min-height: 30px;
+        }
+        
+        .correct {
+            color: #4CAF50;
+        }
+        
+        .wrong {
+            color: #f44336;
+        }
+        
+        .level-indicator {
+            font-size: 20px;
+            color: #ff9800;
+            margin-bottom: 10px;
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 100px;
+            animation: celebration 2s ease-out;
+        }
+        
+        @keyframes celebration {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>TRÒ CHƠI KÉO THẢ CON VẬT</h1>
+        
+        <div class="level-indicator">Cấp độ: <span id="level">1</span>/3</div>
+        
+        <div class="instructions">
+            <p>Hãy kéo các con vật theo thứ tự bên dưới:</p>
+        </div>
+        
+        <div class="animals-container" id="animals-container">
+            <!-- Các con vật sẽ được thêm bằng JavaScript -->
+        </div>
+        
+        <div class="drop-area" id="drop-area">
+            <div class="target-sequence" id="target-sequence"></div>
+            <div class="user-sequence" id="user-sequence"></div>
+        </div>
+        
+        <div class="feedback" id="feedback"></div>
+        
+        <div class="buttons">
+            <button id="hint-btn">Gợi ý</button>
+            <button id="reset-btn">Làm lại</button>
+            <button id="next-btn" disabled>Tiếp theo</button>
+        </div>
+    </div>
+
+    <script>
+        // Danh sách tất cả các con vật có thể có
+        const allAnimals = ['🐶', '🐱', '🐭', '🐰', '🦊', '🐻', '🐼', '🦁', '🐮', '🐷', '🐸', '🐵'];
+        
+        // Dữ liệu trò chơi
+        const levels = [
+            { // Cấp độ 1: 2 con vật ngẫu nhiên
+                getSequence: function() {
+                    // Chọn ngẫu nhiên 2 con vật khác nhau
+                    const shuffled = [...allAnimals].sort(() => Math.random() - 0.5);
+                    const sequence = shuffled.slice(0, 2);
+                    return {
+                        animals: [...sequence].sort(() => Math.random() - 0.5), // Xáo trộn thứ tự hiển thị
+                        sequence: sequence,
+                        instruction: sequence.join(" → ")
+                    };
+                }
+            },
+            { // Cấp độ 2: 3 con vật ngẫu nhiên
+                getSequence: function() {
+                    const shuffled = [...allAnimals].sort(() => Math.random() - 0.5);
+                    const sequence = shuffled.slice(0, 3);
+                    return {
+                        animals: [...sequence].sort(() => Math.random() - 0.5),
+                        sequence: sequence,
+                        instruction: sequence.join(" → ")
+                    };
+                }
+            },
+            { // Cấp độ 3: 4 con vật ngẫu nhiên
+                getSequence: function() {
+                    const shuffled = [...allAnimals].sort(() => Math.random() - 0.5);
+                    const sequence = shuffled.slice(0, 4);
+                    return {
+                        animals: [...sequence].sort(() => Math.random() - 0.5),
+                        sequence: sequence,
+                        instruction: sequence.join(" → ")
+                    };
+                }
+            }
+        ];
+        
+        // Biến trạng thái
+        let currentLevel = 0;
+        let draggedAnimal = null;
+        let droppedAnimals = [];
+        let canDrop = true;
+        let currentLevelData = null;
+        
+        // Các phần tử DOM
+        const animalsContainer = document.getElementById('animals-container');
+        const dropArea = document.getElementById('drop-area');
+        const targetSequence = document.getElementById('target-sequence');
+        const userSequence = document.getElementById('user-sequence');
+        const feedback = document.getElementById('feedback');
+        const levelDisplay = document.getElementById('level');
+        const hintBtn = document.getElementById('hint-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const nextBtn = document.getElementById('next-btn');
+        
+        // Hiệu ứng ăn mừng
+        function showCelebration() {
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration';
+            celebration.textContent = '🎉';
+            document.body.appendChild(celebration);
+            
+            setTimeout(() => {
+                celebration.remove();
+            }, 2000);
+        }
+        
+        // Khởi tạo trò chơi
+        function initGame() {
+            droppedAnimals = [];
+            canDrop = true;
+            feedback.textContent = '';
+            nextBtn.disabled = true;
+            
+            // Tạo dữ liệu cấp độ hiện tại
+            currentLevelData = levels[currentLevel].getSequence();
+            
+            // Hiển thị cấp độ hiện tại
+            levelDisplay.textContent = currentLevel + 1;
+            
+            // Hiển thị thứ tự mục tiêu
+            targetSequence.innerHTML = '';
+            currentLevelData.sequence.forEach(animal => {
+                const animalElement = document.createElement('div');
+                animalElement.className = 'target-animal';
+                animalElement.textContent = animal;
+                targetSequence.appendChild(animalElement);
+            });
+            
+            // Xóa khu vực thả của người dùng
+            userSequence.innerHTML = '';
+            
+            // Tạo các con vật có thể kéo
+            animalsContainer.innerHTML = '';
+            
+            currentLevelData.animals.forEach(animal => {
+                const animalElement = document.createElement('div');
+                animalElement.className = 'animal';
+                animalElement.textContent = animal;
+                animalElement.draggable = true;
+                
+                animalElement.addEventListener('dragstart', function(e) {
+                    draggedAnimal = animal;
+                    e.dataTransfer.setData('text/plain', animal);
+                    setTimeout(() => {
+                        animalElement.style.visibility = 'hidden';
+                    }, 0);
+                });
+                
+                animalElement.addEventListener('dragend', function() {
+                    animalElement.style.visibility = 'visible';
+                });
+                
+                animalsContainer.appendChild(animalElement);
+            });
+        }
+        
+        // Sự kiện kéo thả
+        dropArea.addEventListener('dragover', function(e) {
+            if (canDrop) {
+                e.preventDefault();
+                dropArea.classList.add('highlight');
+            }
+        });
+        
+        dropArea.addEventListener('dragleave', function() {
+            dropArea.classList.remove('highlight');
+        });
+        
+        dropArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropArea.classList.remove('highlight');
+            
+            if (!canDrop) return;
+            
+            const animal = e.dataTransfer.getData('text/plain');
+            
+            // Kiểm tra xem thứ tự có đúng không
+            const expectedAnimal = currentLevelData.sequence[droppedAnimals.length];
+            
+            if (animal === expectedAnimal) {
+                droppedAnimals.push(animal);
+                
+                // Hiển thị con vật đã thả
+                const animalElement = document.createElement('span');
+                animalElement.className = 'animal';
+                animalElement.textContent = animal;
+                animalElement.style.margin = '5px';
+                userSequence.appendChild(animalElement);
+                
+                // Đánh dấu con vật đã hoàn thành trong target sequence
+                targetSequence.children[droppedAnimals.length - 1].classList.add('completed');
+                
+                // Kiểm tra xem đã hoàn thành chưa
+                if (droppedAnimals.length === currentLevelData.sequence.length) {
+                    canDrop = false;
+                    feedback.textContent = 'Chính xác! Bé giỏi quá!';
+                    feedback.className = 'feedback correct';
+                    nextBtn.disabled = false;
+                    showCelebration();
+                } else {
+                    feedback.textContent = 'Đúng rồi! Tiếp theo là gì nhỉ?';
+                    feedback.className = 'feedback correct';
+                    setTimeout(() => {
+                        feedback.textContent = '';
+                    }, 1000);
+                }
+            } else {
+                feedback.textContent = 'Chưa đúng rồi, bé thử lại nhé!';
+                feedback.className = 'feedback wrong';
+                setTimeout(() => {
+                    feedback.textContent = '';
+                }, 1000);
+            }
+        });
+        
+        // Nút gợi ý
+        hintBtn.addEventListener('click', function() {
+            if (droppedAnimals.length < currentLevelData.sequence.length) {
+                const nextAnimal = currentLevelData.sequence[droppedAnimals.length];
+                feedback.textContent = `Con vật tiếp theo là: ${nextAnimal}`;
+                feedback.className = 'feedback correct';
+                setTimeout(() => {
+                    feedback.textContent = '';
+                }, 2000);
+            }
+        });
+        
+        // Nút làm lại
+        resetBtn.addEventListener('click', function() {
+            initGame();
+        });
+        
+        // Nút tiếp theo
+        nextBtn.addEventListener('click', function() {
+            if (currentLevel < levels.length - 1) {
+                currentLevel++;
+                initGame();
+            } else {
+                feedback.textContent = 'Chúc mừng bé đã hoàn thành tất cả các cấp độ!';
+                feedback.className = 'feedback correct';
+                nextBtn.disabled = true;
+                showCelebration();
+            }
+        });
+        
+        // Bắt đầu trò chơi
+        initGame();
+    </script>
+</body>
+</html>
