@@ -276,7 +276,7 @@
         // Tạo mục tiêu mới
         function generateNewTarget() {
             // Chọn số ngẫu nhiên từ 1 đến 6
-            targetNumber = Math.floor(Math.random() * 6) + 1;
+            targetNumber = Math.floor(Math.random() * 9) + 1;
             
             // Đảm bảo có ít nhất 1 con cá mang số này
             const hasTargetFish = fishArray.some(fish => fish.dataset.number == targetNumber);
